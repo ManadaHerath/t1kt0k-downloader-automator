@@ -1,6 +1,20 @@
 # TikTok HD Video Downloader
 
-Automates downloading TikTok videos in HD quality using tikdownloader.io.
+## Background
+
+I wanted to download some TikTok videos in bulk and tried automating it. Since TikTok dont't encourage scraping, creating a simple script was hard.
+
+Then I thought of a shortcut. There are premium web scrapers out there, although they don't give access to bulk downloading, they do provide single file downloads with ad walls for HD quality videos with watermark removed. So I scraped their website instead. This tool can now download TikTok videos in HD quality without watermarks by automating the process.
+
+## How It Works
+
+The scraper works by:
+1. Submitting the TikTok video URL to tikdownloader.io's API endpoint
+2. Parsing the JSON/HTML response to extract HD download links
+3. Identifying the highest quality video link available
+4. Downloading the video file directly to your machine
+
+The script handles various response formats and prioritizes HD quality links over standard quality ones.
 
 ## Features
 
@@ -8,34 +22,46 @@ Automates downloading TikTok videos in HD quality using tikdownloader.io.
 - HD quality (highest available resolution)
 - Progress tracking during download
 - Error handling and retry logic
-- Simple command-line interface
-- **Telegram Bot integration** - share URLs directly in Telegram!
+- Command-line interface
+- Telegram Bot integration for easy sharing
+#### Quick Start with Launcher Script
 
-## Installation
-
-1. Install required dependencies:
+Run the launcher script on macOS or Linux:
 ```bash
-pip install -r requirements.txt
+./run_bot.sh
 ```
 
-## Usage
+The script will automatically check and install dependencies, prompt for your bot token on first run, save it securely in a .env file, and start the bot.
 
-### Method 1: Telegram Bot (Recommended)
+#### Manual Setup
 
-The easiest way to use this downloader is through the Telegram bot!
+1. Get a Bot Token from BotFather on Telegram. Open Telegram, search for @BotFather, send /newbot and follow the instructions. Copy the token you receive.
 
-1. **Get a Bot Token:**
-   - Open Telegram and search for `@BotFather`
-   - Send `/newbot` and follow the instructions
-   - Copy the token you receive
+2. Create a .env file:
+   ```bash
+   echo "TELEGRAM_BOT_TOKEN=your_token_here" > .env
+   ```
 
-2. **Run the bot:**
+3. Optional - Enable local mode if bot and server are on the same machine:
+   ```bash
+   echo "LOCAL=true" >> .env
+   ```
+   When enabled, videos are saved locally instead of being re-uploaded to Telegram.
+
+4. Run the bot:
    ```bash
    python telegram_bot.py
    ```
-   Enter your bot token when prompted (or set `TELEGRAM_BOT_TOKEN` environment variable)
 
-3. **Start chatting with your bot:**
+5. Start chatting with your bot. Search for your bot in Telegram, send /start to begin, then share any TikTok URL.
+
+Features include automatic filename generation using creator name and video ID, upload progress tracking, support for all TikTok URL formats, and local mode to avoid redundant uploads.
+3. **Run the bot:**
+   ```bash
+   python telegram_bot.py
+   ```
+
+4. **Start chatting with your bot:**
    - Search for your bot in Telegram
    - Send `/start` to begin
    - Share any TikTok URL and get the video instantly!
@@ -79,27 +105,22 @@ downloader.download_tiktok_hd(
 4. Select "Copy Link"
 5. Paste the URL when prompted by the script
 
+## How to Get TikTok Video URL
+
+Open TikTok app or website, find the video you want to download, tap the Share button, select Copy Link, and paste the URL when prompted by the script.
+
 ## Requirements
 
-- Python 3.7+
+- Python 3.7 or higher
 - requests
 - beautifulsoup4
 - lxml
+- python-telegram-bot (for bot features)
 
 ## Notes
 
-- This tool respects TikTok's content and should only be used to download videos you have permission to download
-- The script uses tikdownloader.io's service, which is independent from TikTok
-- Downloaded videos will be saved in the current directory unless specified otherwise
+This tool should only be used to download videos you have permission to download. The script uses tikdownloader.io's service, which is independent from TikTok. Downloaded videos are saved in the downloads directory by default if local, else can be downloaded through telegram bot.
 
 ## Troubleshooting
 
-If you encounter issues:
-- Ensure you have a stable internet connection
-- Check that the TikTok URL is valid and publicly accessible
-- Try updating the dependencies: `pip install -r requirements.txt --upgrade`
-- Some videos may be private or restricted and cannot be downloaded
-
-## Disclaimer
-
-This tool is for personal use only. Respect content creators' rights and TikTok's terms of service.
+If you encounter issues, ensure you have a stable internet connection and check that the TikTok URL is valid and publicly accessible. Try updating the dependencies with pip install -r requirements.txt --upgrade. Some videos may be private or restricted and cannot be downloaded.

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-TikTok Video Downloader Automation Script
-Downloads TikTok videos in HD quality using tikdownloader.io
-"""
 
 import requests
 from bs4 import BeautifulSoup
@@ -27,16 +23,11 @@ class TikTokDownloader:
         })
 
     def get_download_page(self, tiktok_url):
-        """
-        Submit TikTok URL to tikdownloader.io and get the download page
-        """
         try:
             print(f"[*] Submitting TikTok URL: {tiktok_url}")
             
-            # The API endpoint for tikdownloader.io
             api_url = f"{self.base_url}/api/ajaxSearch"
             
-            # Update headers for API request
             self.session.headers.update({
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'Origin': self.base_url,
@@ -44,7 +35,6 @@ class TikTokDownloader:
                 'X-Requested-With': 'XMLHttpRequest'
             })
             
-            # Prepare the payload
             payload = {
                 'q': tiktok_url,
                 'lang': 'en'
@@ -55,12 +45,10 @@ class TikTokDownloader:
             
             if response.status_code == 200:
                 try:
-                    # Try to parse as JSON first
                     json_data = response.json()
                     print(f"[*] Received JSON response")
                     return json_data
                 except:
-                    # If not JSON, return as text
                     print(f"[*] Received HTML response")
                     return response.text
             else:
@@ -75,34 +63,25 @@ class TikTokDownloader:
             return None
 
     def extract_hd_download_link(self, response_data):
-        """
-        Extract the HD download link from the response (JSON or HTML)
-        """
         try:
-            # If response is a dictionary (JSON), extract from there
             if isinstance(response_data, dict):
                 print("[*] Parsing JSON response")
                 
-                # Check for status
                 if response_data.get('status') == 'error':
                     error_msg = response_data.get('mess', 'Unknown error')
                     print(f"[!] API Error: {error_msg}")
                     return None
                 
-                # Look for download links in common JSON structures
                 download_links = []
                 
-                # Method 1: Check for 'data' field with HTML content
                 if 'data' in response_data:
                     html_content = response_data['data']
                     soup = BeautifulSoup(html_content, 'html.parser')
                     
-                    # Find all download links
                     for link in soup.find_all('a', href=True):
                         href = link['href']
                         text = link.get_text().strip()
                         
-                        # Look for HD or high quality downloads
                         if href.startswith('http') and any(keyword in text.lower() for keyword in ['hd', 'download', 'mp4', 'without watermark', 'no watermark']):
                             priority = 10 if 'hd' in text.lower() else 5
                             download_links.append({
@@ -111,7 +90,6 @@ class TikTokDownloader:
                                 'priority': priority
                             })
                 
-                # Method 2: Check for direct video URL fields
                 possible_keys = ['url', 'video_url', 'download_url', 'hd_url', 'hdplay']
                 for key in possible_keys:
                     if key in response_data and response_data[key]:
@@ -121,7 +99,6 @@ class TikTokDownloader:
                             'priority': 9
                         })
                 
-                # Sort and return best option
                 if download_links:
                     download_links.sort(key=lambda x: x['priority'], reverse=True)
                     print(f"[*] Found {len(download_links)} download options")
@@ -134,15 +111,12 @@ class TikTokDownloader:
                     print(f"[*] Response keys: {list(response_data.keys())}")
                     return None
             
-            # If response is HTML string
             else:
                 print("[*] Parsing HTML response")
                 soup = BeautifulSoup(response_data, 'html.parser')
                 
-                # Look for download links - common patterns
                 download_links = []
                 
-                # Method 1: Find links with "HD" or "Download" text
                 for link in soup.find_all('a', href=True):
                     text = link.get_text().strip().lower()
                     href = link['href']
@@ -155,7 +129,6 @@ class TikTokDownloader:
                                 'priority': 10 if 'hd' in text else 5
                             })
                 
-                # Method 2: Look for download buttons
                 download_buttons = soup.find_all(['a', 'button'], class_=re.compile(r'download|btn-download', re.I))
                 for btn in download_buttons:
                     href = btn.get('href') or btn.get('data-href')
@@ -166,7 +139,6 @@ class TikTokDownloader:
                             'priority': 8
                         })
                 
-                # Method 3: Look for direct video links in the HTML
                 video_tags = soup.find_all('video')
                 for video in video_tags:
                     source = video.get('src') or (video.find('source') and video.find('source').get('src'))
@@ -177,7 +149,6 @@ class TikTokDownloader:
                             'priority': 7
                         })
                 
-                # Sort by priority and return the best match
                 if download_links:
                     download_links.sort(key=lambda x: x['priority'], reverse=True)
                     print(f"[*] Found {len(download_links)} download options")
@@ -186,7 +157,6 @@ class TikTokDownloader:
                     return download_links[0]['url']
                 else:
                     print("[!] No download links found in the response")
-                    # Print the HTML for debugging
                     print("[*] Response HTML (first 500 chars):")
                     print(str(response_data)[:500])
                     return None
@@ -198,16 +168,12 @@ class TikTokDownloader:
             return None
 
     def download_video(self, download_url, output_filename="tiktok_video.mp4"):
-        """
-        Download the video from the extracted URL
-        """
         try:
             print(f"[*] Downloading video from: {download_url}")
             
             response = self.session.get(download_url, stream=True)
             
             if response.status_code == 200:
-                # Get file size if available
                 total_size = int(response.headers.get('content-length', 0))
                 
                 with open(output_filename, 'wb') as f:
@@ -219,7 +185,7 @@ class TikTokDownloader:
                                 downloaded += len(chunk)
                                 progress = (downloaded / total_size) * 100
                                 print(f"\r[*] Download progress: {progress:.1f}%", end='', flush=True)
-                        print()  # New line after progress
+                        print()
                     else:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
@@ -237,29 +203,22 @@ class TikTokDownloader:
             return False
 
     def download_tiktok_hd(self, tiktok_url, output_filename="tiktok_video.mp4"):
-        """
-        Main method to download TikTok video in HD
-        """
         print(f"\n{'='*60}")
         print("TikTok HD Video Downloader")
         print(f"{'='*60}\n")
         
-        # Step 1: Get the download page
         html_content = self.get_download_page(tiktok_url)
         if not html_content:
             print("[!] Failed to get download page")
             return False
         
-        # Small delay to avoid rate limiting
         time.sleep(1)
         
-        # Step 2: Extract HD download link
         download_url = self.extract_hd_download_link(html_content)
         if not download_url:
             print("[!] Failed to extract download link")
             return False
         
-        # Step 3: Download the video
         success = self.download_video(download_url, output_filename)
         
         if success:
@@ -272,26 +231,19 @@ class TikTokDownloader:
 
 
 def main():
-    """
-    Main function - example usage
-    """
-    # Example TikTok URL - replace with your actual TikTok video URL
     tiktok_url = input("Enter TikTok video URL: ").strip()
     
     if not tiktok_url:
         print("[!] Please provide a valid TikTok URL")
         return
     
-    # Optionally specify output filename
     output_filename = input("Enter output filename (press Enter for default 'tiktok_video.mp4'): ").strip()
     if not output_filename:
         output_filename = "tiktok_video.mp4"
     
-    # Ensure .mp4 extension
     if not output_filename.endswith('.mp4'):
         output_filename += '.mp4'
     
-    # Create downloader instance and download
     downloader = TikTokDownloader()
     downloader.download_tiktok_hd(tiktok_url, output_filename)
 
